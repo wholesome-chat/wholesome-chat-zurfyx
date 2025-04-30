@@ -1,13 +1,34 @@
 import "./App.css";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import WebSocketConnection from "./WebSocketConnection";
 
 function App() {
   const [messages, setMessages] = useState<string[]>([]);
   const [input, setInput] = useState("");
 
+  const ws = useMemo(() => {
+    return new WebSocketConnection();
+  }, []);
+  useEffect(() => {
+    ws.connect();
+    return () => {
+      ws.disconnect();
+    };
+  }, [ws]);
+
+  useEffect(() => {
+    const listener = ws.onMessage((message) => {
+      setMessages((prevMessages) => [...prevMessages, message]);
+    });
+    return () => {
+      listener();
+    };
+  }, [ws]);
+
   const handleSend = () => {
     if (input.trim()) {
-      setMessages((prev) => [...prev, input]);
+      // setMessages((prev) => [...prev, input]);
+      ws.sendMessage(input);
       setInput("");
     }
   };
@@ -20,7 +41,7 @@ function App() {
             <div
               key={index}
               className={`p-2 mb-2 rounded ${
-                index % 2 === 0
+                true
                   ? "bg-blue-100 text-blue-900"
                   : "bg-purple-100 text-purple-900"
               }`}
